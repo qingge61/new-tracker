@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间记录器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#64748B',
+                        accent: '#10B981',
+                        danger: '#EF4444',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }
+            .btn-hover {
+                @apply transform transition-all duration-300 hover:scale-105;
+            }
+            .table-row-animate {
+                @apply transition-all duration-300 hover:bg-gray-50;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-inter min-h-screen flex flex-col">
+    <header class="bg-gradient-to-r from-primary to-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold flex items-center">
+                <i class="fa fa-clock-o mr-3 text-2xl"></i>
+                时间记录器
+            </h1>
+            <p class="mt-2 text-blue-100 max-w-2xl">记录你的工作、学习或任何活动的起始时间和结束时间，自动计算时长并生成详细的时间报告。</p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 计时器卡片 -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+                    <div class="bg-primary/10 border-l-4 border-primary p-4">
+                        <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                            <i class="fa fa-stopwatch text-primary mr-2"></i> 计时器
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div id="current-time" class="text-center text-3xl font-bold text-gray-800 mb-6">
+                            00:00:00
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">活动名称</label>
+                                <input type="text" id="activity-name" placeholder="输入活动名称" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <button id="start-btn" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg shadow btn-hover flex items-center justify-center">
+                                    <i class="fa fa-play mr-2"></i> 开始
+                                </button>
+                                <button id="stop-btn" disabled class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-2 px-4 rounded-lg shadow btn-hover flex items-center justify-center">
+                                    <i class="fa fa-stop mr-2"></i> 停止
+                                </button>
+                            </div>
+                            
+                            <div class="pt-2">
+                                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>开始时间</span>
+                                    <span id="start-time-display">--:--:--</span>
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-600">
+                                    <span>结束时间</span>
+                                    <span id="end-time-display">--:--:--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 统计信息 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden mt-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="bg-secondary/10 border-l-4 border-secondary p-4">
+                        <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                            <i class="fa fa-bar-chart text-secondary mr-2"></i> 统计信息
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <div class="text-xs text-gray-500">今日总计</div>
+                                <div id="today-total" class="text-xl font-bold text-gray-800">00:00:00</div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <div class="text-xs text-gray-500">平均时长</div>
+                                <div id="average-duration" class="text-xl font-bold text-gray-800">00:00:00</div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <div class="text-xs text-gray-500">记录总数</div>
+                                <div id="record-count" class="text-xl font-bold text-gray-800">0</div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <div class="text-xs text-gray-500">最长记录</div>
+                                <div id="longest-record" class="text-xl font-bold text-gray-800">00:00:00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 时间记录表格 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+                    <div class="bg-secondary/10 border-l-4 border-secondary p-4 flex justify-between items-center">
+                        <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                            <i class="fa fa-table text-secondary mr-2"></i> 时间记录
+                        </h2>
+                        <div class="flex space-x-2">
+                            <div class="relative">
+                                <input type="text" id="search-input" placeholder="搜索活动..." 
+                                    class="pl-8 pr-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                                <i class="fa fa-search absolute left-3 top-2 text-gray-400"></i>
+                            </div>
+                            <button id="export-btn" class="bg-accent hover:bg-accent/90 text-white text-sm font-medium py-1 px-3 rounded-lg shadow btn-hover flex items-center">
+                                <i class="fa fa-download mr-1"></i> 导出
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">活动名称</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">开始时间</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">结束时间</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时长</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="records-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- 记录将通过 JavaScript 动态添加 -->
+                                <tr class="text-center">
+                                    <td colspan="6" class="px-6 py-12 text-gray-500">
+                                        <div class="flex flex-col items-center">
+                                            <i class="fa fa-calendar-o text-4xl mb-3 text-gray-300"></i>
+                                            <p>暂无时间记录</p>
+                                            <p class="text-xs mt-1">点击"开始"按钮创建第一条记录</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="pagination" class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                        <div class="flex-1 flex justify-between sm:hidden">
+                            <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                上一页
+                            </button>
+                            <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                下一页
+                            </button>
+                        </div>
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    显示 <span class="font-medium">1</span> 到 <span class="font-medium">0</span> 条，共 <span class="font-medium" id="total-records">0</span> 条记录
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                    <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <span class="sr-only">上一页</span>
+                                        <i class="fa fa-chevron-left text-xs"></i>
+                                    </button>
+                                    <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-primary text-sm font-medium text-white">
+                                        1
+                                    </button>
+                                    <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <span class="sr-only">下一页</span>
+                                        <i class="fa fa-chevron-right text-xs"></i>
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-lg font-semibold">时间记录器</h3>
+                    <p class="text-gray-400 text-sm mt-1">高效管理你的时间</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-linkedin text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+                &copy; 2025 时间记录器 | 高效记录和管理你的时间
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 初始化数据
+        let records = JSON.parse(localStorage.getItem('timeRecords')) || [];
+        let startTime = null;
+        let timerInterval = null;
+        let currentActivity = '';
+        
+        // DOM 元素
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const currentTimeEl = document.getElementById('current-time');
+        const activityNameEl = document.getElementById('activity-name');
+        const startDisplayEl = document.getElementById('start-time-display');
+        const endDisplayEl = document.getElementById('end-time-display');
+        const recordsBodyEl = document.getElementById('records-table-body');
+        const searchInput = document.getElementById('search-input');
+        const exportBtn = document.getElementById('export-btn');
+        const totalRecordsEl = document.getElementById('total-records');
+        
+        // 更新统计信息
+        function updateStatistics() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecords = records.filter(record => record.date === today);
+            
+            // 计算今日总计时间
+            const todayTotalSeconds = todayRecords.reduce((total, record) => {
+                return total + record.durationSeconds;
+            }, 0);
+            document.getElementById('today-total').textContent = formatTime(todayTotalSeconds);
+            
+            // 计算平均时长
+            const avgDuration = records.length > 0 
+                ? records.reduce((total, record) => total + record.durationSeconds, 0) / records.length
+                : 0;
+            document.getElementById('average-duration').textContent = formatTime(avgDuration);
+            
+            // 记录总数
+            document.getElementById('record-count').textContent = records.length;
+            
+            // 最长记录
+            const longestRecord = records.length > 0 
+                ? Math.max(...records.map(record => record.durationSeconds))
+                : 0;
+            document.getElementById('longest-record').textContent = formatTime(longestRecord);
+            
+            // 更新总记录数显示
+            totalRecordsEl.textContent = records.length;
+        }
+        
+        // 格式化时间（秒 -> HH:MM:SS）
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '00:00:00';
+            
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // 格式化日期时间
+        function formatDateTime(dateTime) {
+            const date = new Date(dateTime);
+            return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+        }
+        
+        // 格式化日期（仅日期部分）
+        function formatDate(dateTime) {
+            const date = new Date(dateTime);
+            return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+        }
+        
+        // 开始计时
+        function startTimer() {
+            currentActivity = activityNameEl.value.trim() || '未命名活动';
+            startTime = new Date();
+            
+            startDisplayEl.textContent = formatDateTime(startTime);
+            endDisplayEl.textContent = '--:--:--';
+            
+            startBtn.disabled = true;
+            startBtn.classList.remove('bg-primary', 'hover:bg-primary/90');
+            startBtn.classList.add('bg-gray-300', 'hover:bg-gray-400');
+            
+            stopBtn.disabled = false;
+            stopBtn.classList.remove('bg-gray-300', 'hover:bg-gray-400');
+            stopBtn.classList.add('bg-danger', 'hover:bg-danger/90');
+            
+            let elapsedSeconds = 0;
+            currentTimeEl.textContent = '00:00:00';
+            
+            timerInterval = setInterval(() => {
+                elapsedSeconds++;
+                currentTimeEl.textContent = formatTime(elapsedSeconds);
+            }, 1000);
+            
+            // 添加动画效果
+            currentTimeEl.classList.add('text-primary', 'animate-pulse');
+        }
+        
+        // 停止计时
+        function stopTimer() {
+            clearInterval(timerInterval);
+            
+            const endTime = new Date();
+            const durationMs = endTime - startTime;
+            const durationSeconds = Math.floor(durationMs / 1000);
+            
+            endDisplayEl.textContent = formatDateTime(endTime);
+            
+            // 创建新记录
+            const newRecord = {
+                id: Date.now(),
+                name: currentActivity,
+                startTime: startTime.toISOString(),
+                endTime: endTime.toISOString(),
+                date: formatDate(startTime),
+                durationSeconds: durationSeconds
+            };
+            
+            // 添加到记录数组
+            records.unshift(newRecord);
+            
+            // 保存到本地存储
+            localStorage.setItem('timeRecords', JSON.stringify(records));
+            
+            // 更新表格
+            renderRecords();
+            
+            // 更新统计信息
+            updateStatistics();
+            
+            // 重置 UI
+            startBtn.disabled = false;
+            startBtn.classList.remove('bg-gray-300', 'hover:bg-gray-400');
+            startBtn.classList.add('bg-primary', 'hover:bg-primary/90');
+            
+            stopBtn.disabled = true;
+            stopBtn.classList.remove('bg-danger', 'hover:bg-danger/90');
+            stopBtn.classList.add('bg-gray-300', 'hover:bg-gray-400');
+            
+            currentTimeEl.textContent = '00:00:00';
+            currentTimeEl.classList.remove('text-primary', 'animate-pulse');
+            
+            // 添加成功提示
+            showNotification('记录已保存', 'success');
+        }
+        
+        // 渲染记录表格
+        function renderRecords(filteredRecords = null) {
+            const recordsToRender = filteredRecords || records;
+            
+            if (recordsToRender.length === 0) {
+                recordsBodyEl.innerHTML = `
+                    <tr class="text-center">
+                        <td colspan="6" class="px-6 py-12 text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <i class="fa fa-calendar-o text-4xl mb-3 text-gray-300"></i>
+                                <p>暂无时间记录</p>
+                                <p class="text-xs mt-1">点击"开始"按钮创建第一条记录</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            recordsBodyEl.innerHTML = '';
+            
+            recordsToRender.forEach(record => {
+                const row = document.createElement('tr');
+                row.className = 'table-row-animate';
+                row.setAttribute('data-id', record.id);
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${record.name}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${record.date}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${formatDateTime(record.startTime).split(' ')[1]}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${formatDateTime(record.endTime).split(' ')[1]}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium ${record.durationSeconds > 3600 ? 'text-green-600' : 'text-gray-900'}">
+                            ${formatTime(record.durationSeconds)}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="text-red-600 hover:text-red-900 delete-btn" data-id="${record.id}">
+                            <i class="fa fa-trash-o mr-1"></i> 删除
+                        </button>
+                    </td>
+                `;
+                
+                recordsBodyEl.appendChild(row);
+            });
+            
+            // 添加删除事件监听器
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const recordId = parseInt(e.currentTarget.getAttribute('data-id'));
+                    deleteRecord(recordId);
+                });
+            });
+        }
+        
+        // 删除记录
+        function deleteRecord(id) {
+            if (confirm('确定要删除这条记录吗？')) {
+                records = records.filter(record => record.id !== id);
+                localStorage.setItem('timeRecords', JSON.stringify(records));
+                renderRecords();
+                updateStatistics();
+                showNotification('记录已删除', 'error');
+            }
+        }
+        
+        // 搜索记录
+        function searchRecords() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                renderRecords();
+                return;
+            }
+            
+            const filtered = records.filter(record => 
+                record.name.toLowerCase().includes(searchTerm) || 
+                record.date.includes(searchTerm)
+            );
+            
+            renderRecords(filtered);
+        }
+        
+        // 导出记录为 CSV
+        function exportRecords() {
+            if (records.length === 0) {
+                showNotification('没有记录可导出', 'warning');
+                return;
+            }
+            
+            let csvContent = "活动名称,日期,开始时间,结束时间,时长(秒)\n";
+            
+            records.forEach(record => {
+                csvContent += `${record.name},${record.date},${formatDateTime(record.startTime)},${formatDateTime(record.endTime)},${record.durationSeconds}\n`;
+            });
+            
+            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `时间记录_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('记录已导出为 CSV 文件', 'success');
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            
+            // 设置样式和内容
+            let bgColor, textColor, icon;
+            switch(type) {
+                case 'success':
+                    bgColor = 'bg-green-50';
+                    textColor = 'text-green-800';
+                    icon = 'fa-check-circle';
+                    break;
+                case 'error':
+                    bgColor = 'bg-red-50';
+                    textColor = 'text-red-800';
+                    icon = 'fa-exclamation-circle';
+                    break;
+                case 'warning':
+                    bgColor = 'bg-yellow-50';
+                    textColor = 'text-yellow-800';
+                    icon = 'fa-exclamation-triangle';
+                    break;
+                default:
+                    bgColor = 'bg-blue-50';
+                    textColor = 'text-blue-800';
+                    icon = 'fa-info-circle';
+            }
+            
+            notification.className = `fixed top-4 right-4 ${bgColor} ${textColor} border-l-4 border-green-400 p-4 rounded shadow-lg z-50 transform transition-all duration-500 ease-in-out translate-x-full opacity-0`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fa ${icon} mr-3 text-lg"></i>
+                    <p>${message}</p>
+                </div>
+            `;
+            
+            // 添加到页面
+            document.body.appendChild(notification);
+            
+            // 显示通知
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full', 'opacity-0');
+            }, 10);
+            
+            // 自动关闭
+            setTimeout(() => {
+                notification.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 500);
+            }, 3000);
+        }
+        
+        // 事件监听器
+        startBtn.addEventListener('click', startTimer);
+        stopBtn.addEventListener('click', stopTimer);
+        searchInput.addEventListener('input', searchRecords);
+        exportBtn.addEventListener('click', exportRecords);
+        
+        // 初始化页面
+        renderRecords();
+        updateStatistics();
+    </script>
+</body>
+</html>
+    
